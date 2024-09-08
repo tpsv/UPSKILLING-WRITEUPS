@@ -1,0 +1,96 @@
+Task 1: What is file inclusion?
+
+This room is designed to provide fundamental insights into exploiting file inclusion vulnerabilities, such as Local File Inclusion (LFI), Remote File Inclusion (RFI), and directory traversal. We will also explore the potential risks associated with these vulnerabilities if discovered, along with the necessary steps for remediation. Throughout, we’ll provide practical examples and hands-on challenges for each vulnerability type.
+
+Web applications are often designed to request access to system files, such as images or static text, through parameters. These parameters are query strings added to a URL that help retrieve data or perform actions based on user input. The diagram below illustrates and breaks down the important parts of a URL.
+
+As an example, parameters are employed in Google searches, where GET requests send user input to the search engine (e.g., https://www.google.com/search?q=TryHackMe).
+
+Consider a scenario where a user requests access to files from a web server. In this case, the user sends an HTTP request to the web server specifying a file to display. For instance, if a user wishes to access and view their CV via a web application, the request might look like: http://webapp.thm/get.php?file=userCV.pdf, where "file" is the parameter and "userCV.pdf" is the file being accessed.
+
+Why do File Inclusion vulnerabilities occur?
+
+These vulnerabilities often arise in poorly written and implemented web applications, typically in languages like PHP. The root of the problem lies in inadequate input validation. User inputs are not properly sanitized or verified, allowing users to submit arbitrary input to a function, thereby creating the vulnerability.
+
+What are the risks of File Inclusion?
+
+The risks depend on what the attacker can access. A successful attack could expose sensitive data, including application-related code, files, or back-end credentials. If the attacker gains write access to directories such as /tmp, they may be able to execute remote commands (RCE). However, the impact is minimal if the attacker cannot access sensitive data or write to the server.
+
+Task 3: Path Traversal
+
+Path traversal, or directory traversal, is a security vulnerability that allows attackers to access operating system resources, such as files stored on the server running the web application. This vulnerability is exploited by manipulating the URL of the web application to access files or directories outside the application’s root directory.
+
+Path traversal vulnerabilities arise when user input is passed to functions like PHP’s file_get_contents. The issue usually results from poor input validation or filtering. In PHP, file_get_contents reads the contents of a file, and you can find more details about this function online.
+
+The diagram below illustrates how a web application stores files in /var/www/app. In a typical scenario, a user might request the contents of a file like userCV.pdf, which is located at /var/www/app/CVs.
+
+To test the vulnerability, payloads can be added to the URL to observe how the application behaves. The “dot-dot-slash” attack (../) moves the directory one level up, potentially allowing the attacker to access files outside the designated folder. For instance, with a URL like http://webapp.thm/get.php?file=../../../../etc/passwd, the attacker may retrieve the /etc/passwd file if input validation is absent.
+
+Without proper validation, the web application may return the contents of unauthorized files. Below are some commonly targeted OS files during such attacks:
+
+/etc/issue — System identification message displayed before the login prompt.
+/etc/profile — Defines system-wide default variables.
+/proc/version — Linux kernel version.
+/etc/passwd — List of registered system users.
+/etc/shadow — Contains user password information.
+/root/.bash_history — Command history for the root user.
+/var/log/messages — Logs global system messages.
+/var/mail/root — Contains root user's email.
+/root/.ssh/id_rsa — Private SSH keys for root or valid users.
+/var/log/apache2/access.log — Logs access requests for Apache servers.
+C:\boot.ini — Windows boot options for BIOS systems.
+Which function causes path traversal vulnerabilities in PHP?
+Answer: file_get_contents
+
+Local File Inclusion (LFI)
+
+In this section, we’ll explore different LFI scenarios and how to exploit them.
+
+For example, suppose a web application offers two languages, and the user can choose between EN and AR.
+
+Try Lab #1 to read the /etc/passwd file. What is the request URI?
+Answer: lab1.php?file=/etc/passwd
+
+In Lab #2, what is the directory specified in the include function?
+Answer: includes
+
+Local File Inclusion (LFI) #2
+
+In this task, we dive deeper into LFI vulnerabilities and explore some methods to bypass filters within the include function.
+
+In the earlier cases, we had access to the web application’s source code, making it easier to exploit. However, in this case, we are performing black-box testing where we don’t have the source code. Here, error messages become key in understanding how the data is processed.
+
+For example, when attempting to access the /etc/passwd file using a four-level path traversal (../../../../), we still receive an error. This implies that the include function appends .php to the input. To bypass this, we can use a null byte (%00), which tricks the application into ignoring the .php extension.
+
+Try Lab #3 and read the /etc/passwd file by adding four path traversal commands followed by %00.
+Answer: lab3.php?file=../../../../etc/passwd%00
+
+Remote File Inclusion (RFI)
+
+Remote File Inclusion (RFI) involves injecting external URLs into vulnerable applications. Like LFI, RFI happens when user input is not sanitized, but RFI enables attackers to include remote files. For RFI to work, the allow_url_fopen option must be enabled in the server configuration.
+
+The risks associated with RFI are more severe compared to LFI. An RFI vulnerability can lead to:
+
+Remote Command Execution (RCE)
+Sensitive Information Disclosure
+Cross-Site Scripting (XSS)
+Denial of Service (DoS)
+Steps for RFI Attack:
+
+The attacker hosts a malicious PHP file (e.g., cmd.txt) on their server.
+The attacker injects a URL pointing to their server (e.g., http://attacker.thm/cmd.txt).
+The vulnerable web application fetches and executes the remote file, allowing the attacker to execute commands.
+Remediation:
+
+Regularly update the system, services, and web application frameworks.
+Disable PHP error messages to prevent information leaks.
+Use a Web Application Firewall (WAF) to mitigate attacks.
+Turn off unnecessary PHP features, such as allow_url_fopen and allow_url_include.
+Implement strict input validation.
+Use whitelisting and blacklisting for file names and locations.
+
+
+
+
+
+
